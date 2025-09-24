@@ -17,6 +17,8 @@ dependencies:
   path: ^1.9.1
   sqflite_common_ffi: ^2.3.6
   url_launcher: ^6.3.2
+  sprite_image: ^1.0.1
+  fuzzywuzzy: ^1.2.0
 
 dev_dependencies:
   flutter_test:

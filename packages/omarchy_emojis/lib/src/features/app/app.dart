@@ -22,7 +22,10 @@ class _AppState extends State<App> {
   Widget build(BuildContext context) {
     return ServicesProvider(
       services: widget.services,
-      child: const OmarchyApp(home: HomeScreen()),
+      child: const OmarchyApp(
+        debugShowCheckedModeBanner: false,
+        home: HomeScreen(),
+      ),
     );
   }
 }

@@ -1,10 +1,12 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:fuzzywuzzy/fuzzywuzzy.dart';
+import 'package:fuzzywuzzy/model/extracted_result.dart';
 
 class EmojiData {
   const EmojiData({
+    required this.id,
     required this.name,
     required this.unified,
     required this.sheetX,
@@ -13,46 +15,73 @@ class EmojiData {
     required this.subcategory,
   });
 
+  final int id;
   final String name;
   final String unified;
   final int sheetX;
   final int sheetY;
   final String category;
   final String subcategory;
+
+  @override
+  String toString() {
+    return name;
+  }
 }
 
-class EmojisService {
-  const EmojisService(this.data);
+class EmojiService {
+  const EmojiService(this.data);
 
-  static Future<EmojisService> loadFromBundle(BuildContext context) async {
+  const EmojiService.demo()
+    : data = const {
+        'grinning face': EmojiData(
+          id: 0,
+          name: 'grinning face',
+          unified: '1F600',
+          sheetX: 0,
+          sheetY: 0,
+          category: 'Smileys & Emotion',
+          subcategory: 'face-smiling',
+        ),
+      };
+
+  static Future<EmojiService> loadFromBundle() async {
     final json = await rootBundle.loadString('assets/emoji.json');
     final data = jsonDecode(json);
-    return EmojisService(
-      (data as Map<String, dynamic>).map(
-        (key, value) => MapEntry(
-          key,
-          EmojiData(
-            name: value['name'],
-            unified: value['unified'],
-            sheetX: value['sheet_x'],
-            sheetY: value['sheet_y'],
-            category: value['category'],
-            subcategory: value['subcategory'],
-          ),
-        ),
-      ),
-    );
+    EmojiData read(int i) {
+      final value = data[i];
+      return EmojiData(
+        id: i,
+        name: value['name'],
+        unified: value['unified'],
+        sheetX: value['sheet_x'],
+        sheetY: value['sheet_y'],
+        category: value['category'],
+        subcategory: value['subcategory'],
+      );
+    }
+
+    return EmojiService({
+      for (var i = 0; i < (data as List<dynamic>).length; i++)
+        data[i]['name']: read(i),
+    });
   }
 
   final Map<String, EmojiData> data;
 
-  List<EmojiData> filter(String query) {
+  List<ExtractedResult<EmojiData>> filter(String query) {
     if (query.isEmpty) {
-      return data.values.toList();
+      return data.values
+          .toList()
+          .map((e) => ExtractedResult(e, 100, 1, (c) => c.name))
+          .toList();
     }
-    final lowerQuery = query.toLowerCase();
-    return data.values
-        .where((emoji) => emoji.name.toLowerCase().contains(lowerQuery))
-        .toList();
+    return extractTop(
+      query: query,
+      choices: data.values.toList(),
+      limit: 40,
+      cutoff: 70,
+      getter: (v) => v.name,
+    );
   }
 }
